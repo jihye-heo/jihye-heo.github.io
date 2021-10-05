@@ -7,7 +7,7 @@
 
 # Site Settings
 locale                   : "en-US"
-title                    : "Jihye Heo / Site Title"
+title                    : "Jihye Heo"
 title_separator          : "-"
 name                     : &name "Jihye Heo"
 description              : &description "personal description"
