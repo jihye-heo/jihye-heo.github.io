@@ -82,7 +82,7 @@ analytics:
 author:
   name             : "Jihye Heo"
   avatar           : "try1.jpeg"
-  bio              : "I am a graduate student at Vanderbilt University"
+  bio              : #"I am a graduate student at Vanderbilt University"
   location         : "Nashville TN"
   employer         :
   #pubmed           : "https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
