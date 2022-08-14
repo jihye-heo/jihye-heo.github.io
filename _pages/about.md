@@ -12,4 +12,4 @@ Hello, I am a Ph.D. candidate in Economics at Vanderbilt University. My job mark
 
 I will be on the job market from 2022 - 2023.
 
-Fields of Specialization: Industrial Organization, International Trade, Applied Econometrics
+**Fields of Specialization**: Industrial Organization, International Trade, Applied Econometrics
