@@ -9,4 +9,4 @@ redirect_from:
 
 {% include base_path %}
 
-You can view the full version of my CV here(date)
+You can view the full version of my CV [here](/cv_jihye.pdf)
