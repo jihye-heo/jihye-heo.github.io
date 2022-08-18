@@ -16,4 +16,3 @@ author_profile: true
 * **2021 S** Microeconomics, Principles of Microeconomics (4.75)
 * **2021 F** Microeconomics (4.19)
 * **2022 S** Principles of Microeconomics (4.33), Economics of Risk (4.61)
-* **2022 F** Economics of Risk, Strategic Analysis
