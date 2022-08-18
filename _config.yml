@@ -10,7 +10,7 @@ locale                   : "en-US"
 title                    : "Jihye Heo"
 title_separator          : "-"
 name                     : &name "Jihye Heo"
-description              : &description "personal description"
+description              : &description "Ph.D. Candidate, Vanderbilt University Department of Economics"
 url                      : https://jihye-heo.github.io # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : "" # the subpath of your site, e.g. "/blog"
 repository               : "jihye-heo/jihye-heo.github.io"
@@ -75,7 +75,7 @@ social:
 analytics:
   provider               :  "google-universal" # false (default), "google", "google-universal", "custom"
   google:
-    tracking_id          :
+    tracking_id          :  "UA-327970407-1"
 
 
 # Site Author
