@@ -7,6 +7,8 @@ author_profile: true
 
 ## Vanderbilt University, Department of Economics 2018 - 2022
 
+Here is a link to teaching evaluations [Teaching evaluations](/teaching_evaluations.pdf).
+
 ### Teaching Assistant
 * **2018 F** Principles of Macroeconomics, Principles of Microeconomics
 * **2019 S** Economic Statistics, Intermediate Microeconomic Theory
