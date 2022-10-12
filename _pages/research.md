@@ -12,5 +12,4 @@ author_profile: true
 *Presented at*: WEAI 97th Annual Conference, Young Economist Symposium 2022 (Yale), Southern Economic Association 92nd Annual Meeting (Fort Lauderdale, scheduled)
 
 ## Work in Progress
-* Product Bundling in International Markets with [Ebehi Iyoha](https://ebehii.github.io) and [Joel Rodrigue](https://joelrodrigue.com)
-* Robust Inference in Differentiated Products Demand Analysis with Trimmed Infinitesimal Shares with [Yuya Sasaki](https://sites.google.com/site/yuyasasaki/) 
+<!--* Robust Inference in Differentiated Products Demand Analysis with Trimmed Infinitesimal Shares with [Yuya Sasaki](https://sites.google.com/site/yuyasasaki/) -->
