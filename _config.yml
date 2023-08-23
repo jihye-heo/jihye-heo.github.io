@@ -10,7 +10,7 @@ locale                   : "en-US"
 title                    : "Jihye Heo"
 title_separator          : "-"
 name                     : &name "Jihye Heo"
-description              : &description "Ph.D. Candidate, Vanderbilt University Department of Economics"
+description              : &description "Assisant Professor, Oberlin College Department of Economics"
 url                      : https://jihye-heo.github.io # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : "" # the subpath of your site, e.g. "/blog"
 repository               : "jihye-heo/jihye-heo.github.io"
@@ -82,12 +82,12 @@ analytics:
 author:
   name             : "Jihye Heo"
   avatar           : "visa_photo.jpg" # "try1.jpeg"
-  bio              : "Ph.D. Candidate in Economics, Vanderbilt University"
-  location         : "Vanderbilt University"
+  bio              : "Assisant Professor in Economics, Oberlin College"
+  location         : "Oberlin College"
   employer         :
   #pubmed           : "https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
   #googlescholar    : "http://yourfullgooglescholarurl.com"
-  email            : ji.hye.heo@vanderbilt.edu
+  email            : jheo1@oberlin.edu
   researchgate     :  # example: "https://www.researchgate.net/profile/yourprofile"
   uri              :
   bitbucket        :
