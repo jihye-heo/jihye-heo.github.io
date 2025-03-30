@@ -12,7 +12,7 @@ author_profile: true
 ---
 
 ## Work in Progress
-* Product Bundling in International Markets (with Ebehi Iyoha and [Joel Rodrigue](https://joelrodrigue.com))
+* Product Bundling in International Markets (with [Ebehi Iyoha](https://www.hbs.edu/faculty/Pages/profile.aspx?facId=1322929) and [Joel Rodrigue](https://joelrodrigue.com))
 
 <!---
 * Robust Inference in Differentiated Products Demand Analysis with Trimmed Infinitesimal Shares (with [Yuya Sasaki](https://sites.google.com/site/yuyasasaki/))
