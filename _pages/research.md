@@ -7,7 +7,7 @@ author_profile: true
 
 ## Working Papers
 * Product Bundling, Joint Markups and Trade liberalization
-* [Export Dynamics of Multiproduct Firms](https://jihye-heo.github.io/files/Heo_Kim_Export_Dynamics.pdf) (with [Hanjo Terry Kim](https://hanjo-kim.github.io/))
+* Export Dynamics of Multiproduct Firms (with [Hanjo Terry Kim](https://hanjo-kim.github.io/)) [link here](https://jihye-heo.github.io/files/Heo_Kim_Export_Dynamics.pdf)
 ---
 
 ## Work in Progress
