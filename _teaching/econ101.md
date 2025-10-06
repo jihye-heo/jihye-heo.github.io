@@ -1,7 +1,7 @@
 ---
 layout: archive
 title: "ECON 101: Principles of Economics"
-permalink: /_teaching/econ101/
+permalink: /teaching/econ101/
 author_profile: true
 ---
 
