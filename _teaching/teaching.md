@@ -21,4 +21,3 @@ author_profile: true
 * **Graduate Courses:** Microeconomic Theory I (Ph.D. and Masters)
 * **Undergraduate Courses:** Principles of Micro/Macroeconomics, Intermediate Microeconomic Theory, Game Theory with Economic Applications, Economic Statistics, Economics of Information and Communications Technology, Selected Microeconomic Topics, Economics of Risk
 
-[Teaching evaluations](teaching_evaluations.pdf)
