@@ -15,7 +15,7 @@ author_profile: true
 
 These interactive simulations help you understand key economic concepts through hands-on decision-making.
 
-### 🌮 [Taco Truck: Perfect Competition Simulator](games/taco-truck-game.html)
+### 🌮 [Taco Truck: Perfect Competition Simulator](/games/taco-truck-game.html)
 Learn about perfect competition by running your own taco truck business! Experience firsthand how:
 - Firms are price-takers in perfect competition
 - Easy entry leads to zero economic profit in the long run
