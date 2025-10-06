@@ -4,11 +4,17 @@ title: "Teaching"
 permalink: /teaching/
 author_profile: true
 ---
-
 {% include base_path %}
 
-## Vanderbilt University, Department of Economics 2018 - 2022
+## Oberlin College, Department of Economics 2023 - present
 
+### Instructor
+* **[ECON 101: Principles of Economics](/econ101/)** 
+* **ECON255** Introduction to Econometrics
+* **ECON326** International Trade
+* **ECON427** Seminar : International Trade and Firm Dynamics
+
+## Vanderbilt University, Department of Economics 2018 - 2022
 Here is a link to teaching evaluations : [Teaching evaluations](teaching_evaluations.pdf).
 
 ### Teaching Assistant
