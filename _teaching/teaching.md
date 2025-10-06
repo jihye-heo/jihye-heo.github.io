@@ -9,7 +9,7 @@ author_profile: true
 ## Oberlin College, Department of Economics 2023 - present
 
 ### Instructor
-* **[ECON 101: Principles of Economics](/econ101/)** 
+* **[ECON 101: Principles of Economics](econ101/)** 
 * **ECON255** Introduction to Econometrics
 * **ECON326** International Trade
 * **ECON427** Seminar : International Trade and Firm Dynamics
