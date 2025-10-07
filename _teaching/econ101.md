@@ -4,14 +4,11 @@ title: "ECON 101: Principles of Economics"
 permalink: /teaching/econ101/
 author_profile: true
 ---
-## Course Information
-**Oberlin College, Department of Economics**  
-**Instructor:** Jihye Heo
----
+
 ## Interactive Learning Games
 These interactive simulations help you understand key economic concepts through hands-on decision-making.
 
-### 🌮 [Taco Truck: Perfect Competition Simulator](https://jihye-heo.github.io/econ-teaching-games/taco-truck-game.html)
+### 1. 🌮 [Taco Truck: Perfect Competition Simulator](https://jihye-heo.github.io/econ-teaching-games/taco-truck-game.html)
 Learn about perfect competition by running your own taco truck business! Experience firsthand how:
 - Firms are price-takers in perfect competition
 - Easy entry leads to zero economic profit in the long run
@@ -20,7 +17,9 @@ Learn about perfect competition by running your own taco truck business! Experie
 
 **How to use:** Play through the game and download your results at the end.
 
-### 🤝 [Prisoner's Dilemma: Game Theory Simulator](https://jihye-heo.github.io/econ-teaching-games/prisoner-dilemma-game.html)
+---
+
+### 2. 🤝 [Prisoner's Dilemma: Game Theory Simulator](https://jihye-heo.github.io/econ-teaching-games/prisoner-dilemma-game.html)
 Explore strategic decision-making and game theory through the classic Prisoner's Dilemma! Discover how:
 - Individual rationality leads to collective irrationality
 - Cooperation vs defection creates different payoffs
