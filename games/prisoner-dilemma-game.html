@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prisoner's Dilemma Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJjNxghAGSa-wTP9dUzED2H3JjP-TPfjE",
+            authDomain: "prisoner-dilemma-game.firebaseapp.com",
+            databaseURL: "https://prisoner-dilemma-game-default-rtdb.firebaseio.com",
+            projectId: "prisoner-dilemma-game",
+            storageBucket: "prisoner-dilemma-game.firebasestorage.app",
+            messagingSenderId: "102199092161",
+            appId: "1:102199092161:web:4e9c2389f9e086bd2ac540"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const PrisonersDilemmaGame = () => {
+            const [mode, setMode] = useState(null);
+            const [gameState, setGameState] = useState('setup');
+            const [playerName, setPlayerName] = useState('');
+            const [opponentName, setOpponentName] = useState('');
+            const [roomCode, setRoomCode] = useState('');
+            const [playerRole, setPlayerRole] = useState(null);
+            const [myChoice, setMyChoice] = useState(null);
+            const [opponentChoice, setOpponentChoice] = useState(null);
+            const [myScore, setMyScore] = useState(0);
+            const [opponentScore, setOpponentScore] = useState(0);
+            const [round, setRound] = useState(1);
+            const [history, setHistory] = useState([]);
+            const [aiStrategy, setAiStrategy] = useState('tit-for-tat');
+            const [showInfo, setShowInfo] = useState(false);
+            const [activeTab, setActiveTab] = useState('game');
+            const [copied, setCopied] = useState(false);
+            const [roomRef, setRoomRef] = useState(null);
+
+            const payoffMatrix = {
+                'cooperate-cooperate': { player: 3, opponent: 3, desc: 'Both cooperate - mutual benefit' },
+                'cooperate-defect': { player: 0, opponent: 5, desc: 'You cooperated, opponent defected' },
+                'defect-cooperate': { player: 5, opponent: 0, desc: 'You defected, opponent cooperated' },
+                'defect-defect': { player: 1, opponent: 1, desc: 'Both defected - punishment' }
+            };
+
+            // AI Mode Functions
+            const getAIChoice = () => {
+                if (aiStrategy === 'always-cooperate') return 'cooperate';
+                if (aiStrategy === 'always-defect') return 'defect';
+                if (aiStrategy === 'random') return Math.random() > 0.5 ? 'cooperate' : 'defect';
+                if (aiStrategy === 'tit-for-tat') {
+                    if (history.length === 0) return 'cooperate';
+                    return history[history.length - 1].player;
+                }
+                return 'cooperate';
+            };
+
+            const handleAIChoice = (choice) => {
+                const ai = getAIChoice();
+                const key = `${choice}-${ai}`;
+                const result = payoffMatrix[key];
+                setMyChoice(choice);
+                setOpponentChoice(ai);
+                setMyScore(prev => prev + result.player);
+                setOpponentScore(prev => prev + result.opponent);
+                setHistory(prev => [...prev, { player: choice, opponent: ai, round: round }]);
+                setGameState('result');
+            };
+
+            // Multiplayer Functions
+            const generateRoomCode = () => {
+                return Math.random().toString(36).substring(2, 8).toUpperCase();
+            };
+
+            const createRoom = async () => {
+                if (!playerName.trim()) {
+                    alert('Please enter your name');
+                    return;
+                }
+                const code = generateRoomCode();
+                setRoomCode(code);
+                setPlayerRole('host');
+                setGameState('waiting');
+                
+                const newRoomRef = database.ref('rooms/' + code);
+                setRoomRef(newRoomRef);
+                
+                await newRoomRef.set({
+                    host: { name: playerName, choice: null, score: 0, ready: false, readyForNext: false },
+                    guest: { name: null, choice: null, score: 0, ready: false, readyForNext: false },
+                    round: 1,
+                    history: [],
+                    state: 'waiting'
+                });
+
+                // Listen for guest joining
+                newRoomRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data && data.state === 'playing' && data.guest.name) {
+                        setOpponentName(data.guest.name);
+                        setGameState('playing');
+                    }
+                });
+            };
+
+            const joinRoom = async () => {
+                if (!playerName.trim()) {
+                    alert('Please enter your name');
+                    return;
+                }
+                if (!roomCode.trim()) {
+                    alert('Please enter a room code');
+                    return;
+                }
+                
+                const joinRoomRef = database.ref('rooms/' + roomCode.toUpperCase());
+                setRoomRef(joinRoomRef);
+                
+                try {
+                    const snapshot = await joinRoomRef.once('value');
+                    const room = snapshot.val();
+                    
+                    if (!room) {
+                        alert('Room not found. Please check the code.');
+                        return;
+                    }
+                    if (room.guest.name) {
+                        alert('Room is full!');
+                        return;
+                    }
+                    
+                    setPlayerRole('guest');
+                    setOpponentName(room.host.name);
+                    
+                    // Update guest name and set state to playing
+                    await joinRoomRef.child('guest').update({ name: playerName });
+                    await joinRoomRef.update({ state: 'playing' });
+                    setGameState('playing');
+                    
+                    // Listen for game updates
+                    joinRoomRef.on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) {
+                            updateGameFromFirebase(data);
+                        }
+                    });
+                } catch (error) {
+                    alert('Error joining room: ' + error.message);
+                }
+            };
+
+            const handleMultiplayerChoice = async (choice) => {
+                setMyChoice(choice);
+                const playerPath = playerRole === 'host' ? 'host' : 'guest';
+                await roomRef.child(playerPath).update({ choice: choice, ready: true });
+            };
+
+            const updateGameFromFirebase = (data) => {
+                if (playerRole === 'host') {
+                    if (data.host.ready && data.guest.ready) {
+                        calculateMultiplayerResults(data.host.choice, data.guest.choice);
+                    }
+                } else {
+                    if (data.host.ready && data.guest.ready) {
+                        calculateMultiplayerResults(data.guest.choice, data.host.choice);
+                    }
+                }
+            };
+
+            const calculateMultiplayerResults = (myMove, oppMove) => {
+                if (gameState === 'result') return; // Prevent double calculation
+                
+                const key = `${myMove}-${oppMove}`;
+                const result = payoffMatrix[key];
+                
+                setOpponentChoice(oppMove);
+                setMyScore(prev => prev + result.player);
+                setOpponentScore(prev => prev + result.opponent);
+                setGameState('result');
+
+                // Update Firebase with scores
+                if (playerRole === 'host') {
+                    roomRef.update({
+                        'host/score': myScore + result.player,
+                        'guest/score': opponentScore + result.opponent,
+                        'host/readyForNext': false,
+                        'guest/readyForNext': false
+                    });
+                }
+            };
+
+            const nextRound = async () => {
+                const playerPath = playerRole === 'host' ? 'host' : 'guest';
+                
+                // Mark this player as ready for next round
+                await roomRef.child(playerPath).update({ 
+                    choice: null, 
+                    ready: false,
+                    readyForNext: true 
+                });
+                
+                // Check if both players are ready
+                const snapshot = await roomRef.once('value');
+                const data = snapshot.val();
+                
+                if (data.host.readyForNext && data.guest.readyForNext) {
+                    // Both ready - move to next round
+                    if (playerRole === 'host') {
+                        await roomRef.update({ 
+                            round: round + 1,
+                            'host/readyForNext': false,
+                            'guest/readyForNext': false
+                        });
+                    }
+                    
+                    setMyChoice(null);
+                    setOpponentChoice(null);
+                    setRound(round + 1);
+                    setGameState('playing');
+                } else {
+                    // Wait for other player
+                    setGameState('waitingForNext');
+                }
+            };
+
+            // Listen for both players ready to continue
+            useEffect(() => {
+                if (mode === 'multiplayer' && roomRef && gameState === 'waitingForNext') {
+                    const listener = roomRef.on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data && data.host.readyForNext && data.guest.readyForNext) {
+                            setMyChoice(null);
+                            setOpponentChoice(null);
+                            setRound(data.round);
+                            setGameState('playing');
+                        }
+                    });
+                    
+                    return () => roomRef.off('value', listener);
+                }
+            }, [mode, roomRef, gameState]);
+
+            // Remove the old useEffect for round listening
+
+            const copyRoomCode = () => {
+                navigator.clipboard.writeText(roomCode);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            const resetToModeSelect = () => {
+                if (roomRef) {
+                    roomRef.off();
+                }
+                setMode(null);
+                setGameState('setup');
+                setRoomCode('');
+                setPlayerRole(null);
+                setPlayerName('');
+                setOpponentName('');
+                setMyChoice(null);
+                setOpponentChoice(null);
+                setMyScore(0);
+                setOpponentScore(0);
+                setRound(1);
+                setHistory([]);
+                setActiveTab('game');
+            };
+
+            const analytics = history.length > 0 ? {
+                playerCoopRate: (history.filter(h => h.player === 'cooperate').length / history.length * 100).toFixed(1),
+                opponentCoopRate: (history.filter(h => h.opponent === 'cooperate').length / history.length * 100).toFixed(1),
+                efficiency: ((myScore + opponentScore) / (history.length * 6) * 100).toFixed(1)
+            } : null;
+
+            // Mode Selection Screen
+            if (!mode) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="bg-white rounded-2xl shadow-xl p-8">
+                                <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">Prisoner's Dilemma</h1>
+                                <p className="text-gray-600 text-center mb-8">Interactive Game Theory Simulation</p>
+                                
+                                <div className="bg-indigo-50 border-l-4 border-indigo-600 p-4 mb-8 rounded">
+                                    <h3 className="font-semibold text-indigo-900 mb-2">The Classic Dilemma</h3>
+                                    <p className="text-sm text-indigo-800 mb-2">
+                                        Two players must each choose to Cooperate or Defect. Individual rationality leads to collective irrationality.
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2 text-xs text-indigo-800">
+                                        <div className="bg-white/50 p-2 rounded">Both Cooperate: 3 points each</div>
+                                        <div className="bg-white/50 p-2 rounded">Both Defect: 1 point each</div>
+                                        <div className="bg-white/50 p-2 rounded">You Defect, They Cooperate: You 5, Them 0</div>
+                                        <div className="bg-white/50 p-2 rounded">You Cooperate, They Defect: You 0, Them 5</div>
+                                    </div>
+                                </div>
+
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Choose Your Mode</h2>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <button
+                                        onClick={() => {
+                                            setMode('ai');
+                                            setOpponentName('AI');
+                                            setGameState('playing');
+                                        }}
+                                        className="bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold p-8 rounded-2xl transition transform hover:scale-105 shadow-lg"
+                                    >
+                                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <div className="text-2xl mb-2">Play with AI</div>
+                                        <div className="text-sm opacity-90">Practice against different AI strategies</div>
+                                        <div className="text-xs mt-3 opacity-75">Perfect for learning game theory concepts</div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setMode('multiplayer');
+                                            setGameState('setup');
+                                        }}
+                                        className="bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold p-8 rounded-2xl transition transform hover:scale-105 shadow-lg"
+                                    >
+                                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        <div className="text-2xl mb-2">Play with Classmate</div>
+                                        <div className="text-sm opacity-90">Real-time game with another student</div>
+                                        <div className="text-xs mt-3 opacity-75">Works across different devices!</div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Main Game Interface
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                                        Prisoner's Dilemma - {mode === 'ai' ? 'AI Mode' : 'Multiplayer Mode'}
+                                    </h1>
+                                    <p className="text-gray-600">
+                                        {mode === 'ai' ? 'Playing against AI' : 'Playing with classmate'}
+                                    </p>
+                                </div>
+                                <button onClick={resetToModeSelect} className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition text-sm">
+                                    Change Mode
+                                </button>
+                            </div>
+
+                            {mode === 'ai' && gameState === 'playing' && (
+                                <>
+                                    <div className="grid grid-cols-3 gap-4 mb-6">
+                                        <div className="bg-blue-50 p-4 rounded-lg text-center">
+                                            <div className="text-sm text-gray-600">Round</div>
+                                            <div className="text-3xl font-bold text-blue-600">{round}</div>
+                                        </div>
+                                        <div className="bg-green-50 p-4 rounded-lg text-center">
+                                            <div className="text-sm text-gray-600">Your Score</div>
+                                            <div className="text-3xl font-bold text-green-600">{myScore}</div>
+                                        </div>
+                                        <div className="bg-purple-50 p-4 rounded-lg text-center">
+                                            <div className="text-sm text-gray-600">AI Score</div>
+                                            <div className="text-3xl font-bold text-purple-600">{opponentScore}</div>
+                                        </div>
+                                    </div>
+
+                                    {analytics && (
+                                        <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6 rounded">
+                                            <div className="font-semibold text-orange-900">Efficiency: {analytics.efficiency}%</div>
+                                            <div className="text-xs text-orange-700 mb-1">Combined points earned ÷ maximum possible if both always cooperated</div>
+                                            <div className="text-sm text-orange-800">You cooperate {analytics.playerCoopRate}% of the time</div>
+                                        </div>
+                                    )}
+
+                                    <div className="mb-6">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">AI Strategy:</label>
+                                        <select
+                                            value={aiStrategy}
+                                            onChange={(e) => setAiStrategy(e.target.value)}
+                                            className="w-full p-2 border border-gray-300 rounded-lg"
+                                            disabled={round > 1}
+                                        >
+                                            <option value="tit-for-tat">Tit-for-Tat</option>
+                                            <option value="always-cooperate">Always Cooperate</option>
+                                            <option value="always-defect">Always Defect</option>
+                                            <option value="random">Random</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                            <h3 className="text-sm font-semibold text-gray-700 mb-3 text-center">Payoff Matrix</h3>
+                                            <div className="max-w-md mx-auto">
+                                                <table className="w-full border-collapse">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="border-2 border-gray-300 p-2"></th>
+                                                            <th className="border-2 border-gray-300 p-2 bg-green-50 text-xs font-semibold">Opponent Cooperates</th>
+                                                            <th className="border-2 border-gray-300 p-2 bg-red-50 text-xs font-semibold">Opponent Defects</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td className="border-2 border-gray-300 p-2 bg-green-50 text-xs font-semibold">You Cooperate</td>
+                                                            <td className="border-2 border-gray-300 p-3 text-center">
+                                                                <div className="text-green-600 font-bold">You: 3</div>
+                                                                <div className="text-purple-600 font-bold">Them: 3</div>
+                                                            </td>
+                                                            <td className="border-2 border-gray-300 p-3 text-center">
+                                                                <div className="text-green-600 font-bold">You: 0</div>
+                                                                <div className="text-purple-600 font-bold">Them: 5</div>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td className="border-2 border-gray-300 p-2 bg-red-50 text-xs font-semibold">You Defect</td>
+                                                            <td className="border-2 border-gray-300 p-3 text-center">
+                                                                <div className="text-green-600 font-bold">You: 5</div>
+                                                                <div className="text-purple-600 font-bold">Them: 0</div>
+                                                            </td>
+                                                            <td className="border-2 border-gray-300 p-3 text-center">
+                                                                <div className="text-green-600 font-bold">You: 1</div>
+                                                                <div className="text-purple-600 font-bold">Them: 1</div>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <h2 className="text-xl font-semibold text-center text-gray-700 mb-4">What will you do?</h2>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                onClick={() => handleAIChoice('cooperate')}
+                                                className="bg-green-500 hover:bg-green-600 text-white font-bold py-6 px-8 rounded-xl transition transform hover:scale-105 shadow-lg"
+                                            >
+                                                <div className="text-2xl mb-2">🤝</div>
+                                                <div>Cooperate</div>
+                                            </button>
+                                            <button
+                                                onClick={() => handleAIChoice('defect')}
+                                                className="bg-red-500 hover:bg-red-600 text-white font-bold py-6 px-8 rounded-xl transition transform hover:scale-105 shadow-lg"
+                                            >
+                                                <div className="text-2xl mb-2">⚔️</div>
+                                                <div>Defect</div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {mode === 'ai' && gameState === 'result' && (
+                                <div>
+                                    <div className="bg-gray-50 p-6 rounded-xl mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Round {round} Results</h3>
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="text-center">
+                                                <div className="text-4xl mb-2">{myChoice === 'cooperate' ? '🤝' : '⚔️'}</div>
+                                                <div className="font-semibold text-gray-700">You</div>
+                                                <div className="text-2xl font-bold text-green-600 mt-2">
+                                                    +{payoffMatrix[`${myChoice}-${opponentChoice}`].player}
+                                                </div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="text-4xl mb-2">{opponentChoice === 'cooperate' ? '🤝' : '⚔️'}</div>
+                                                <div className="font-semibold text-gray-700">AI</div>
+                                                <div className="text-2xl font-bold text-purple-600 mt-2">
+                                                    +{payoffMatrix[`${myChoice}-${opponentChoice}`].opponent}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-center text-gray-600 italic border-t pt-4">
+                                            {payoffMatrix[`${myChoice}-${opponentChoice}`].desc}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button onClick={nextRound} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg">
+                                            Next Round
+                                        </button>
+                                        <button onClick={resetToModeSelect} className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg">
+                                            New Game
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {mode === 'multiplayer' && gameState === 'setup' && (
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                                        <input
+                                            type="text"
+                                            value={playerName}
+                                            onChange={(e) => setPlayerName(e.target.value)}
+                                            placeholder="Enter your name"
+                                            className="w-full p-3 border border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            onClick={createRoom}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-6 rounded-xl transition"
+                                        >
+                                            <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                            <div>Create Room</div>
+                                        </button>
+                                        
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                value={roomCode}
+                                                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                                                placeholder="Room Code"
+                                                className="w-full p-3 border border-gray-300 rounded-lg"
+                                            />
+                                            <button
+                                                onClick={joinRoom}
+                                                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 rounded-xl transition"
+                                            >
+                                                Join Room
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {mode === 'multiplayer' && gameState === 'waiting' && (
+                                <div className="text-center py-12">
+                                    <svg className="w-16 h-16 mx-auto text-indigo-600 mb-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Waiting for Opponent...</h2>
+                                    <div className="bg-indigo-50 p-6 rounded-lg inline-block">
+                                        <p className="text-sm text-gray-600 mb-2">Room Code:</p>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-4xl font-bold text-indigo-600">{roomCode}</div>
+                                            <button onClick={copyRoomCode} className="p-2 hover:bg-indigo-100 rounded">
+                                                {copied ? (
+                                                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {mode === 'multiplayer' && gameState === 'playing' && (
+                                <>
+                                    <div className="grid grid-cols-3 gap-4 mb-6">
+                                        <div className="bg-blue-50 p-4 rounded-lg text-center">
+                                            <div className="text-sm text-gray-600">Round</div>
+                                            <div className="text-3xl font-bold text-blue-600">{round}</div>
+                                        </div>
+                                        <div className="bg-green-50 p-4 rounded-lg text-center">
+                                            <div className="text-sm text-gray-600">{playerName}</div>
+                                            <div className="text-3xl font-bold text-green-600">{myScore}</div>
+                                        </div>
+                                        <div className="bg-purple-50 p-4 rounded-lg text-center">
+                                            <div className="text-sm text-gray-600">{opponentName}</div>
+                                            <div className="text-3xl font-bold text-purple-600">{opponentScore}</div>
+                                        </div>
+                                    </div>
+
+                                    {!myChoice ? (
+                                        <div>
+                                            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                                <h3 className="text-sm font-semibold text-gray-700 mb-3 text-center">Payoff Matrix</h3>
+                                                <div className="max-w-md mx-auto">
+                                                    <table className="w-full border-collapse">
+                                                        <thead>
+                                                            <tr>
+                                                                <th className="border-2 border-gray-300 p-2"></th>
+                                                                <th className="border-2 border-gray-300 p-2 bg-green-50 text-xs font-semibold">Opponent Cooperates</th>
+                                                                <th className="border-2 border-gray-300 p-2 bg-red-50 text-xs font-semibold">Opponent Defects</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td className="border-2 border-gray-300 p-2 bg-green-50 text-xs font-semibold">You Cooperate</td>
+                                                                <td className="border-2 border-gray-300 p-3 text-center">
+                                                                    <div className="text-green-600 font-bold">You: 3</div>
+                                                                    <div className="text-purple-600 font-bold">Them: 3</div>
+                                                                </td>
+                                                                <td className="border-2 border-gray-300 p-3 text-center">
+                                                                    <div className="text-green-600 font-bold">You: 0</div>
+                                                                    <div className="text-purple-600 font-bold">Them: 5</div>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="border-2 border-gray-300 p-2 bg-red-50 text-xs font-semibold">You Defect</td>
+                                                                <td className="border-2 border-gray-300 p-3 text-center">
+                                                                    <div className="text-green-600 font-bold">You: 5</div>
+                                                                    <div className="text-purple-600 font-bold">Them: 0</div>
+                                                                </td>
+                                                                <td className="border-2 border-gray-300 p-3 text-center">
+                                                                    <div className="text-green-600 font-bold">You: 1</div>
+                                                                    <div className="text-purple-600 font-bold">Them: 1</div>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <h2 className="text-xl font-semibold text-center text-gray-700 mb-4">What will you do?</h2>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <button
+                                                    onClick={() => handleMultiplayerChoice('cooperate')}
+                                                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-8 rounded-xl transition transform hover:scale-105 shadow-lg"
+                                                >
+                                                    <div className="text-3xl mb-2">🤝</div>
+                                                    <div className="text-xl">Cooperate</div>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMultiplayerChoice('defect')}
+                                                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-8 rounded-xl transition transform hover:scale-105 shadow-lg"
+                                                >
+                                                    <div className="text-3xl mb-2">⚔️</div>
+                                                    <div className="text-xl">Defect</div>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <div className="text-4xl mb-4">{myChoice === 'cooperate' ? '🤝' : '⚔️'}</div>
+                                            <h2 className="text-2xl font-bold text-gray-800">Waiting for {opponentName}...</h2>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {mode === 'multiplayer' && gameState === 'result' && (
+                                <div>
+                                    <div className="bg-gray-50 p-6 rounded-xl mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Round {round} Results</h3>
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="text-center">
+                                                <div className="text-5xl mb-2">{myChoice === 'cooperate' ? '🤝' : '⚔️'}</div>
+                                                <div className="font-semibold text-gray-700">{playerName}</div>
+                                                <div className="text-3xl font-bold text-green-600 mt-2">
+                                                    +{payoffMatrix[`${myChoice}-${opponentChoice}`].player}
+                                                </div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="text-5xl mb-2">{opponentChoice === 'cooperate' ? '🤝' : '⚔️'}</div>
+                                                <div className="font-semibold text-gray-700">{opponentName}</div>
+                                                <div className="text-3xl font-bold text-purple-600 mt-2">
+                                                    +{payoffMatrix[`${myChoice}-${opponentChoice}`].opponent}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-center text-gray-600 italic border-t pt-4">
+                                            {payoffMatrix[`${myChoice}-${opponentChoice}`].desc}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button onClick={nextRound} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg">
+                                            Next Round
+                                        </button>
+                                        <button onClick={resetToModeSelect} className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg">
+                                            New Game
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {mode === 'multiplayer' && gameState === 'waitingForNext' && (
+                                <div className="text-center py-12">
+                                    <div className="text-4xl mb-4">⏳</div>
+                                    <h2 className="text-2xl font-bold text-gray-800">Waiting for {opponentName} to continue...</h2>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<PrisonersDilemmaGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -4,7 +4,6 @@ title: "ECON 101: Principles of Economics"
 permalink: /teaching/econ101/
 author_profile: true
 ---
-
 ## Interactive Learning Games
 These interactive simulations help you understand key economic concepts through hands-on decision-making.
 
@@ -33,4 +32,21 @@ Explore strategic decision-making and game theory through the classic Prisoner's
 **How to use:** Choose your mode and start playing. Perfect for in-class demonstrations or homework assignments!
 
 ---
+
+### 3. 💰 [Second Degree Price Discrimination Simulator](https://jihye-heo.github.io/econ-teaching-games/price-discrimination.html)
+Master the art of pricing strategy by learning how firms use product tiers and quality differences to maximize revenue! Understand how:
+- Firms design product versions to make customers self-select
+- The tie-breaking rule affects customer choices when indifferent
+- Basic tier pricing extracts surplus from low-value customers
+- Premium tier pricing is set to prevent high-value customers from "trading down"
+
+**Three Real-World Scenarios:**
+- **Cloud Storage:** Basic vs Premium plans with different storage limits
+- **Airline Tickets:** Early Bird vs Flexible tickets with different restrictions
+- **Coffee Shop:** Small vs Large Premium drinks with size-based pricing
+
+**How to use:** Choose a scenario, set your prices for both tiers, and see how customers respond. Download your certificate when you find the optimal pricing strategy!
+
+---
+
 [Back to Teaching](/teaching/)
