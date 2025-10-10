@@ -59,5 +59,7 @@ Learn about negative externalities and the tragedy of the commons through an int
 - **Instructor Mode:** Create rooms, manage games, and view social optimum data  
 - **Student Mode:** Join with room code and compete with classmates  
 **How to use:** Instructor creates a room and shares the code. Students join on their phones/computers. Perfect for demonstrating externalities and collective action problems in real-time!
+
 ---
+
 [⬅️ Back to Teaching](/teaching/)
