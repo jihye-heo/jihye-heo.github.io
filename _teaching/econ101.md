@@ -44,7 +44,7 @@ Explore strategic decision-making and game theory through the classic Prisoner's
 
 ---
 
-### 4. ⚡ [Externality Economics: AI Datacenter Game](https://jihye-heo.github.io/econ-teaching-games/externality-game.html)
+### 4. ⚡ [Externality Economics: AI Datacenter Game](https://jihye-heo.github.io/econ-teaching-games/externality-game.html) _(Currently updating....)_
 Learn about negative externalities and the tragedy of the commons through an interactive multiplayer competition! Experience how:
 - Individual profit-maximizing decisions create costs for everyone  
 - Negative externalities lead to market failures and overproduction  
