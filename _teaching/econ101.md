@@ -16,7 +16,9 @@ Learn about perfect competition by running your own taco truck business! Experie
 - The shutdown decision rule works (P vs AVC vs ATC)  
 - Markets reach long-run equilibrium  
 **How to use:** Play through the game and download your results at the end.
+  
 ---
+
 ### 2. 💰 [Second Degree Price Discrimination Simulator](https://jihye-heo.github.io/econ-teaching-games/price-discrimination.html)
 Master the art of pricing strategy by learning how firms use product tiers and quality differences to maximize revenue! Understand how:
 - Firms design product versions to make customers self-select  
