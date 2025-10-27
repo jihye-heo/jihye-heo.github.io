@@ -66,5 +66,7 @@ Learn about negative externalities and congestion effects through an interactive
 - **Instructor Mode:** Create rooms, advance through phases manually, view all analytics
 - **Student Mode:** Join with room code, make production decisions, see results
 **How to use:** Instructor creates a room and shares the code. Students join on their devices and make production choices each round. After each round, results show both firm rankings and household electricity bills, clearly demonstrating the negative externality. Perfect for teaching market failures and policy interventions!
+
 ---
+
 [⬅️ Back to Teaching](/teaching/)
