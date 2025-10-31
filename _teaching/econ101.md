@@ -6,7 +6,9 @@ author_profile: true
 ---
 ## Interactive Learning Games
 These interactive simulations help you understand key economic concepts through hands-on decision-making.
+
 ---
+
 ### 1. 🌮 [Taco Truck: Perfect Competition Simulator](https://jihye-heo.github.io/econ-teaching-games/taco-truck-game.html)
 Learn about perfect competition by running your own taco truck business! Experience firsthand how:
 - Firms are price-takers in perfect competition  
@@ -14,7 +16,9 @@ Learn about perfect competition by running your own taco truck business! Experie
 - The shutdown decision rule works (P vs AVC vs ATC)  
 - Markets reach long-run equilibrium  
 **How to use:** Play through the game and download your results at the end.
+
 ---
+
 ### 2. 💰 [Second Degree Price Discrimination Simulator](https://jihye-heo.github.io/econ-teaching-games/price-discrimination.html)
 Master the art of pricing strategy by learning how firms use product tiers and quality differences to maximize revenue! Understand how:
 - Firms design product versions to make customers self-select  
@@ -26,7 +30,9 @@ Master the art of pricing strategy by learning how firms use product tiers and q
 - **Airline Tickets:** Early Bird vs Flexible tickets with different restrictions  
 - **Coffee Shop:** Small vs Large Premium drinks with size-based pricing  
 **How to use:** Choose a scenario, set your prices for both tiers, and see how customers respond. Download your certificate when you find the optimal pricing strategy!
+
 ---
+
 ### 3. 🤝 [Prisoner's Dilemma: Game Theory Simulator](https://jihye-heo.github.io/econ-teaching-games/prisoner-dilemma-game.html)
 Explore strategic decision-making and game theory through the classic Prisoner's Dilemma! Discover how:
 - Individual rationality leads to collective irrationality  
@@ -37,8 +43,10 @@ Explore strategic decision-making and game theory through the classic Prisoner's
 - **AI Mode:** Practice against different computer strategies with detailed analytics  
 - **Multiplayer Mode:** Play in real-time with classmates across different devices  
 **How to use:** Choose your mode and start playing. Perfect for in-class demonstrations or homework assignments!
+
 ---
-### 4. ⚡ [Externality Economics: AI Datacenter Game](https://jihye-heo.github.io/econ-teaching-games/externality-game-final.html)
+
+### 4. ⚡ [Externality Economics: AI Datacenter Game](https://jihye-heo.github.io/econ-teaching-games/externality-game.html)
 Learn about negative externalities and congestion effects through an interactive multiplayer simulation! Experience how:
 - Individual profit-maximizing decisions create costs for everyone (including non-participants)  
 - Grid congestion increases electricity rates as production rises  
@@ -46,7 +54,6 @@ Learn about negative externalities and congestion effects through an interactive
 - The tragedy of the commons emerges from rational individual choices  
 **Key Learning Concepts:**
 - **Negative Externalities:** Production decisions affect both firms and local households
-- **Congestion Pricing:** Electricity rate (α) increases with average production level
 - **Social Cost vs Private Cost:** Firms don't internalize the costs imposed on households
 - **Market Failure:** Competitive pressure drives overproduction beyond socially optimal levels
 **Game Mechanics:**
