@@ -10,8 +10,8 @@ author_profile: true
 
 ### Instructor
 * **[ECON 101: Principles of Economics](econ101/)** 
-* **ECON255** Introduction to Econometrics
-* **ECON326** International Trade
+* **[ECON255: Introduction to Econometrics](econ255/)**
+* **[ECON326: International Trade](econ326/)**
 * **ECON427** Seminar : International Trade and Firm Dynamics
 
 
