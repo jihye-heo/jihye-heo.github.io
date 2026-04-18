@@ -7,7 +7,7 @@ author_profile: true
 
 ## Working Papers
 * [Product Bundling, Joint Markups and Trade liberalization](https://jihye-heo.github.io/files/Heo_ProductBundling.pdf)
-* [Export Dynamics with Product Proximity](https://jihye-heo.github.io/files/Heo_Kim_Export_Dynamics.pdf) (with [Hanjo Terry Kim](https://hanjo-kim.github.io)) (*submitted*)
+* [Export Dynamics with Product Proximity](https://jihye-heo.github.io/files/Heo_Kim_Export_Dynamics.pdf) (with [Hanjo Terry Kim](https://hanjo-kim.github.io)) (revise and resubmit, *International Economic Review*)
 
 ---
 
