@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Confounded Coefficient — an interactive on multiple linear regression</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+  :root{
+    --paper:#EEF0F4; --card:#FFFFFF; --ink:#1A2433; --muted:#6B7689;
+    --naive:#C83F58; --naive-soft:#F7E4E8; --ctrl:#0B7A78; --ctrl-soft:#E0F0EF;
+    --age1:#A9C2EC; --age2:#5B7FC7; --age3:#1E3A6E;
+    --line:#D8DCE4; --gold:#B98A2E;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:'Source Sans 3',system-ui,sans-serif;font-size:17px;line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px 90px}
+  .serif{font-family:'STIX Two Text',Georgia,serif}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+  /* ---------- header ---------- */
+  header{padding:64px 0 8px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  h1{font-family:'STIX Two Text',serif;font-weight:700;font-size:clamp(34px,5.4vw,54px);
+    line-height:1.06;margin:.35em 0 .3em}
+  h1 .flip{display:inline-block;color:var(--naive);transition:color .5s, transform .5s}
+  h1 .flip.flipped{color:var(--ctrl);transform:rotate(180deg)}
+  .lede{max-width:660px;color:#39455A;font-size:18.5px}
+  .lede b{color:var(--ink)}
+
+  /* progress rail */
+  .rail{position:sticky;top:0;z-index:50;background:rgba(238,240,244,.92);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin:34px -20px 0;
+    padding:10px 20px;display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.05em}
+  .rail .step{display:flex;align-items:center;gap:6px;color:var(--muted);padding:3px 6px;
+    border-radius:999px;white-space:nowrap}
+  .rail .dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none;transition:background .4s}
+  .rail .step.live{color:var(--ink)} .rail .step.live .dot{background:var(--gold)}
+  .rail .step.done{color:var(--ctrl)} .rail .step.done .dot{background:var(--ctrl)}
+
+  /* ---------- sections ---------- */
+  .act{margin-top:64px;position:relative}
+  .act-head{display:flex;align-items:baseline;gap:14px;border-top:3px solid var(--ink);padding-top:14px}
+  .act-no{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.12em;color:var(--muted);white-space:nowrap}
+  h2{font-family:'STIX Two Text',serif;font-size:clamp(22px,3.2vw,30px);font-weight:600;margin:0}
+  .act>p, .card>p{max-width:680px}
+  .locked-body{filter:blur(5px);pointer-events:none;user-select:none}
+  .lock-note{position:absolute;inset:70px 0 auto 0;text-align:center;z-index:5;
+    font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted)}
+  .lock-note span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 16px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:22px 24px;margin:18px 0;box-shadow:0 1px 2px rgba(26,36,51,.05)}
+  .card h3{font-family:'STIX Two Text',serif;font-size:20px;margin:0 0 6px}
+  .qlabel{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+
+  .chart{width:100%;min-height:380px}
+  .chart-tall{min-height:430px}
+  .chart-mini{min-height:280px}
+
+  /* buttons */
+  .btnrow{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+  .btncol{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px;max-width:680px}
+  .btncol button{text-align:left}
+  button{font-family:'Source Sans 3',sans-serif;font-size:15.5px;font-weight:600;
+    border:1.5px solid var(--ink);background:var(--card);color:var(--ink);
+    border-radius:10px;padding:10px 18px;cursor:pointer;transition:all .15s}
+  button:hover{background:var(--ink);color:#fff}
+  button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  button:disabled{opacity:.35;cursor:default;pointer-events:none}
+  button.primary{background:var(--ink);color:#fff}
+  button.primary:hover{background:#0e1620}
+  button.choice.picked{background:var(--ink);color:#fff}
+  button.choice.right{background:var(--ctrl);border-color:var(--ctrl);color:#fff;opacity:1}
+  .toggle{display:inline-flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;margin:10px 0}
+  .toggle button{border:none;border-radius:0;margin:0}
+  .toggle button.on{background:var(--ink);color:#fff}
+
+  /* feedback */
+  .feedback{display:none;border-left:4px solid var(--gold);background:#FBF6EA;
+    border-radius:0 10px 10px 0;padding:14px 18px;margin-top:14px}
+  .feedback.show{display:block;animation:rise .45s ease}
+  .feedback.teal{border-color:var(--ctrl);background:var(--ctrl-soft)}
+  .feedback.rose{border-color:var(--naive);background:var(--naive-soft)}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .hide{display:none}
+  .reveal{animation:rise .5s ease}
+
+  /* regression output tables */
+  table.reg{border-collapse:collapse;width:100%;font-family:'IBM Plex Mono',monospace;
+    font-size:13.5px;margin:10px 0 2px}
+  table.reg caption{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:12px;
+    letter-spacing:.08em;color:var(--muted);padding-bottom:8px;text-transform:uppercase}
+  table.reg th{font-weight:500;color:var(--muted);text-align:right;border-bottom:1.5px solid var(--ink);padding:5px 10px}
+  table.reg th:first-child, table.reg td:first-child{text-align:left}
+  table.reg td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line)}
+  table.reg tr.hi td{background:var(--naive-soft)}
+  table.reg tr.hi-teal td{background:var(--ctrl-soft)}
+  .pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    border-radius:999px;padding:2px 9px;letter-spacing:.04em}
+  .pill.rose{background:var(--naive);color:#fff}
+  .pill.teal{background:var(--ctrl);color:#fff}
+  .num-rose{color:var(--naive);font-weight:600}
+  .num-teal{color:var(--ctrl);font-weight:600}
+
+  /* DAG */
+  .dagwrap{display:flex;justify-content:center;margin:6px 0 2px}
+  .dag{width:100%;max-width:560px;height:auto}
+  .dag .node{fill:var(--card);stroke:var(--ink);stroke-width:1.6}
+  .dag .node.age{fill:#E8EEF9;stroke:var(--age2)}
+  .dag text{font-family:'STIX Two Text',serif;font-size:19px;fill:var(--ink)}
+  .dag .small{font-family:'IBM Plex Mono',monospace;font-size:12px;fill:var(--muted)}
+  .dag .edge{stroke:var(--muted);stroke-width:2;fill:none}
+  .dag .edge.lit{stroke:var(--age2);stroke-width:2.6}
+  .dag .edge.q{stroke:var(--naive);stroke-dasharray:7 5}
+  .dag .sign{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;
+    fill:var(--age2);opacity:0;transition:opacity .5s}
+  .dag .sign.show{opacity:1}
+  .qrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0}
+  .qrow .lead{min-width:280px;max-width:420px}
+  .qrow .mark{font-family:'IBM Plex Mono',monospace;color:var(--ctrl);font-weight:600;
+    opacity:0;transition:opacity .4s}
+  .qrow .mark.show{opacity:1}
+
+  .epilogue{margin-top:70px;border-top:3px solid var(--ink);padding-top:18px}
+  .epilogue ol{max-width:680px;padding-left:22px}
+  .epilogue li{margin:12px 0}
+  footer{margin-top:50px;color:var(--muted);font-size:13.5px;font-family:'IBM Plex Mono',monospace}
+
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px -4px 2px;padding:0 4px}
+  .tablewrap table.reg{min-width:520px;margin:0 0 2px}
+  .tablewrap table.reg td, .tablewrap table.reg th{white-space:nowrap}
+
+  @media (max-width:640px){
+    body{font-size:16px}
+    .wrap{padding:0 14px 70px}
+    header{padding:40px 0 6px}
+    .lede{font-size:16.5px}
+    .act{margin-top:48px}
+    .act-head{flex-direction:column;gap:4px}
+    .card{padding:16px 14px;border-radius:12px}
+    .chart{min-height:320px}
+    .chart-tall{min-height:360px}
+    .chart-mini{min-height:240px}
+    button{font-size:15px;padding:10px 14px}
+    .btncol{max-width:none}
+    .qrow .lead{min-width:0;max-width:none}
+    .rail{margin:26px -14px 0;padding:8px 14px;font-size:11px}
+    .tablewrap table.reg{font-size:12.5px}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">An interactive on multiple linear regression · n = 300, simulated</div>
+  <h1>The sign of <span class="flip" id="titleFlip">β₁</span> is lying to you</h1>
+  <p class="lede">You have data on <b>300 adults</b>: hours of exercise per week, and systolic blood
+  pressure (mmHg). Because this world is simulated, the truth is knowable — and by the end you will
+  see it. Your job along the way: state what you expect, watch a regression contradict you,
+  diagnose <i>why</i>, and fix it.</p>
+</header>
+
+<nav class="rail" id="rail">
+  <div class="step live" id="rail1"><span class="dot"></span>1 setting</div>
+  <div class="step" id="rail2"><span class="dot"></span>2 error term</div>
+  <div class="step" id="rail3"><span class="dot"></span>3 diagram</div>
+  <div class="step" id="rail4"><span class="dot"></span>4 comparison</div>
+  <div class="step" id="rail5"><span class="dot"></span>5 control</div>
+  <div class="step" id="rail6"><span class="dot"></span>6 how wrong?</div>
+</nav>
+
+<!-- ============================ 1 · MOTIVATION + SETTING ============================ -->
+<section class="act" id="act1">
+  <div class="act-head"><span class="act-no">STEP 1</span><h2>Setting: BP<sub>i</sub> = β₀ + β₁·exercise<sub>i</sub> + u<sub>i</sub></h2></div>
+  <p>A health economist wants the effect of exercise on blood pressure and proposes the simple model
+  above. Before touching the data, commit to an expectation.</p>
+
+  <div class="card">
+    <div class="qlabel">Q1 · Expectation, before any data</div>
+    <h3>Based on what you know about exercise and health, what sign should β₁ have?</h3>
+    <div class="btnrow" id="predictRow">
+      <button class="choice" data-pred="neg">β₁ &lt; 0 — exercise lowers BP</button>
+      <button class="choice" data-pred="zero">β₁ ≈ 0 — no real effect</button>
+      <button class="choice" data-pred="pos">β₁ &gt; 0 — exercise raises BP</button>
+    </div>
+    <div class="feedback" id="fb1"></div>
+    <div id="scatterBlock" class="hide">
+      <div id="chart1" class="chart"></div>
+      <div class="btnrow"><button class="primary" id="fitBtn">Fit BP = b₀ + b₁·exercise by OLS</button></div>
+      <div id="out1" class="hide">
+        <div class="tablewrap"><table class="reg">
+          <caption>OLS · dependent variable: systolic BP (mmHg) · n = 300</caption>
+          <thead><tr><th>regressor</th><th>coef.</th><th>std. err.</th><th>t</th><th>p&gt;|t|</th><th>95% CI</th></tr></thead>
+          <tbody id="out1body"></tbody>
+        </table></div>
+        <div class="feedback rose show" id="fbFit"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 2 · WHAT'S IN u ============================ -->
+<section class="act" id="act2">
+  <div class="lock-note" id="lock2"><span>Locked — fit the simple regression in Step 1 first</span></div>
+  <div class="locked-body" id="body2">
+  <div class="act-head"><span class="act-no">STEP 2</span><h2>What is hiding in u?</h2></div>
+  <p>u absorbs every determinant of BP that the model leaves out. Omitting things is unavoidable —
+  the OLS estimate only stays trustworthy if exogeneity holds:
+  <span class="serif"><i>E</i>[u | exercise] = 0</span>. So the question is never
+  <i>“did I omit something?”</i> but <i>“did I omit something that moves with my regressor?”</i></p>
+
+  <div class="card">
+    <div class="qlabel">Q2 · The error term</div>
+    <h3>Which of these omissions breaks the simple regression?</h3>
+    <div class="btncol" id="epsRow">
+      <button class="choice" data-eps="gen">Genetic predisposition to hypertension, unrelated to exercise habits</button>
+      <button class="choice" data-eps="age">Age — it raises BP, and (in this sample) older people exercise more</button>
+      <button class="choice" data-eps="meas">Random measurement error in the blood-pressure readings</button>
+    </div>
+    <div class="feedback" id="fb2"></div>
+  </div>
+  </div>
+</section>
+
+<!-- ============================ 3 · THE DIAGRAM ============================ -->
+<section class="act" id="act3">
+  <div class="lock-note" id="lock3"><span>Locked — find the problem omission in Step 2 first</span></div>
+  <div class="locked-body" id="body3">
+  <div class="act-head"><span class="act-no">STEP 3</span><h2>Draw the problem: age points at both</h2></div>
+  <p>Age is dangerous precisely because it has <b>two arrows</b>: one into the outcome and one into
+  the regressor. Fill in the direction of each arrow for this world.</p>
+
+  <div class="card">
+    <div class="dagwrap">
+      <svg class="dag" viewBox="0 0 560 290" role="img" aria-label="Causal diagram: age affects both exercise and blood pressure; exercise affects blood pressure (the effect we want)">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/>
+          </marker>
+        </defs>
+        <!-- edges -->
+        <path id="edgeAgeEx" class="edge" d="M 238 88 L 152 198" marker-end="url(#arr)"/>
+        <path id="edgeAgeBp" class="edge" d="M 322 88 L 408 198" marker-end="url(#arr)"/>
+        <path class="edge q" d="M 188 228 L 372 228" marker-end="url(#arr)"/>
+        <!-- edge signs -->
+        <text id="signAgeEx" class="sign" x="158" y="138" text-anchor="middle">+</text>
+        <text id="signAgeBp" class="sign" x="402" y="138" text-anchor="middle">+</text>
+        <text class="small" x="280" y="220" text-anchor="middle" fill="#C83F58" style="fill:#C83F58">β₁ = ?</text>
+        <text class="small" x="280" y="252" text-anchor="middle">the effect we want</text>
+        <!-- nodes -->
+        <ellipse class="node age" cx="280" cy="58" rx="58" ry="30"/>
+        <text x="280" y="65" text-anchor="middle">Age</text>
+        <rect class="node" x="48" y="204" width="140" height="48" rx="12"/>
+        <text x="118" y="234" text-anchor="middle">Exercise</text>
+        <rect class="node" x="372" y="204" width="140" height="48" rx="12"/>
+        <text x="442" y="234" text-anchor="middle">BP</text>
+      </svg>
+    </div>
+
+    <div class="qrow">
+      <span class="lead">As age increases, blood pressure typically…</span>
+      <span class="btnrow" style="margin:0">
+        <button class="choice" data-q="bp" data-a="up">rises</button>
+        <button class="choice" data-q="bp" data-a="down">falls</button>
+      </span>
+      <span class="mark" id="markBp">✓ arrow labeled</span>
+    </div>
+    <div class="qrow">
+      <span class="lead">And <i>in this dataset</i>, as age increases, weekly exercise…</span>
+      <span class="btnrow" style="margin:0">
+        <button class="choice" data-q="ex" data-a="up">rises</button>
+        <button class="choice" data-q="ex" data-a="down">falls</button>
+      </span>
+      <span class="mark" id="markEx">✓ arrow labeled</span>
+    </div>
+    <div class="feedback" id="fb3"></div>
+    <div id="ageExBlock" class="hide">
+      <div id="chartAgeEx" class="chart chart-mini"></div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ============================ 4 · THE RIGHT COMPARISON ============================ -->
+<section class="act" id="act4">
+  <div class="lock-note" id="lock4"><span>Locked — label both arrows in Step 3 first</span></div>
+  <div class="locked-body" id="body4">
+  <div class="act-head"><span class="act-no">STEP 4</span><h2>What comparison do we actually want?</h2></div>
+  <p>“The effect of exercise on BP” is a statement about changing <i>one</i> thing. Pick the
+  comparison that isolates it.</p>
+
+  <div class="card">
+    <div class="qlabel">Q3 · Choose the clean comparison</div>
+    <h3>To learn the effect of exercise on BP, we should compare…</h3>
+    <div class="btncol" id="cmpRow">
+      <button class="choice" data-cmp="both">…a 30-year-old who exercises 3 h/week with a 60-year-old who exercises 10 h/week</button>
+      <button class="choice" data-cmp="age">…a 30-year-old who exercises 3 h/week with a 60-year-old who also exercises 3 h/week</button>
+      <button class="choice" data-cmp="same">…two 45-year-olds, one exercising 3 h/week and one exercising 10 h/week</button>
+    </div>
+    <div class="feedback" id="fb4"></div>
+    <div id="bandsBlock" class="hide">
+      <p style="margin-top:16px"><b>Same data, compared correctly.</b> Color the 300 people by age group
+      and fit a separate line <i>within</i> each group — every apples-to-apples slope is negative.
+      The dashed rose line is the Step-1 regression: it tilts up only because it compares young
+      low-exercisers with old high-exercisers, mixing the two arrows of the diagram.</p>
+      <div id="chartBands" class="chart"></div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ============================ 5 · CONTROL FOR AGE ============================ -->
+<section class="act" id="act5">
+  <div class="lock-note" id="lock5"><span>Locked — pick the clean comparison in Step 4 first</span></div>
+  <div class="locked-body" id="body5">
+  <div class="act-head"><span class="act-no">STEP 5</span><h2>Controlling for age: BP<sub>i</sub> = β₀ + β₁·exercise<sub>i</sub> + β₂·age<sub>i</sub> + u<sub>i</sub></h2></div>
+  <p>Multiple regression does “within the same age” for you, at every age at once: it fits a
+  <b>plane</b> over (exercise, age), and β̂₁ is the slope along the exercise axis <i>holding age fixed</i>.</p>
+
+  <div class="card">
+    <div class="btnrow"><button class="primary" id="runMulti">Run the multiple regression</button></div>
+    <div id="multiOut" class="hide">
+      <div class="tablewrap"><table class="reg">
+        <caption>Estimates vs. truth · dependent variable: systolic BP · n = 300</caption>
+        <thead><tr><th>regressor</th><th>(1) simple</th><th>(2) with age</th><th>true value (DGP)</th></tr></thead>
+        <tbody id="cmpBody"></tbody>
+      </table></div>
+      <div class="feedback teal show" id="fbFlip"></div>
+      <div class="toggle" role="group" aria-label="View toggle">
+        <button id="tg3d" class="on">Rotatable 3-D plane</button>
+        <button id="tgFacet">Within age bands (2-D)</button>
+      </div>
+      <div id="chart2" class="chart chart-tall"></div>
+      <p class="readout" id="facetNote" style="color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:14px"></p>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ============================ 6 · HOW WRONG, AND WHEN ============================ -->
+<section class="act" id="act6">
+  <div class="lock-note" id="lock6"><span>Locked — run the multiple regression in Step 5 first</span></div>
+  <div class="locked-body" id="body6">
+  <div class="act-head"><span class="act-no">STEP 6</span><h2>How wrong does the simple regression get — and when?</h2></div>
+  <p>The sign flip you just saw is the dramatic special case, not the rule. What governs the damage
+  is <b>how strongly the omitted variable moves with the regressor</b>. Below, the same 300 people are
+  re-simulated in worlds that differ only in corr(exercise, age); in each world we run the
+  <i>simple</i> regression and record its β̂₁. The true β₁ is −1.0 everywhere.</p>
+
+  <div class="card">
+    <div class="tablewrap"><table class="reg">
+      <caption>Simple-regression β̂₁ across worlds · true β₁ = −1.0 in every row</caption>
+      <thead><tr><th>corr(exercise, age)</th><th>simple β̂₁</th><th>error (β̂₁ − β₁)</th><th>verdict</th></tr></thead>
+      <tbody id="corrBody"></tbody>
+    </table></div>
+    <div class="qlabel" style="margin-top:18px">Q4 · Read the pattern</div>
+    <h3>As corr(exercise, age) increases, the magnitude of the error in the simple regression’s β̂₁…</h3>
+    <div class="btnrow" id="biasRow">
+      <button class="choice" data-bias="down">shrinks</button>
+      <button class="choice" data-bias="same">stays about the same</button>
+      <button class="choice" data-bias="up">grows</button>
+    </div>
+    <div class="feedback" id="fb6"></div>
+  </div>
+  </div>
+</section>
+
+<!-- ============================ EPILOGUE ============================ -->
+<section class="epilogue" id="epi">
+  <div class="eyebrow">Take these with you</div>
+  <ol class="serif" style="font-size:19px">
+    <li><b>Omission is only a problem when the omitted variable moves with your regressor.</b>
+    The bias in the simple regression equals β₂ × δ, where δ is how strongly age tracks exercise.
+    Either factor being zero kills it — at corr = 0 the “wrong” model was nearly right.</li>
+    <li><b>“Controlling for age” means comparing like with like.</b> It is the same idea as the
+    two 45-year-olds: vary exercise, hold age fixed. Multiple regression just does that comparison
+    at every age simultaneously — a plane instead of a pooled line.</li>
+    <li><b>A regression slope is not a causal effect until you defend exogeneity.</b> The simple
+    model’s β̂₁ = +3.2 was estimated perfectly precisely — and answered a different question:
+    “how does BP differ across people who exercise differently <i>and</i> are older?”</li>
+  </ol>
+  <footer>Simulated data · true model: BP = 88 − 1.0·exercise + 0.9·age + N(0, 8²) · OLS computed live in your browser</footer>
+</section>
+
+</div>
+
+<script>
+"use strict";
+/* ============ constants (verified offline) ============ */
+const N=300, SD_EX=2.2, SD_AGE=50/Math.sqrt(12);
+const B0=88, B1=-1.0, B2=0.9, SD_EPS=8, C_DEFAULT=0.75, SEED=20260610;
+
+const COL={ink:'#1A2433',muted:'#6B7689',naive:'#C83F58',ctrl:'#0B7A78',
+  grid:'#E3E6EC',gold:'#B98A2E',ages:['#A9C2EC','#5B7FC7','#1E3A6E']};
+const AGE_SCALE=[[0,'#A9C2EC'],[0.5,'#5B7FC7'],[1,'#1E3A6E']];
+const FONT={family:"'Source Sans 3', sans-serif",color:COL.ink,size:13};
+const PCONF={displayModeBar:false,responsive:true};
+
+/* ============ RNG + math ============ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function makeBase(rng){const u=[],z1=[],z2=[];
+  for(let i=0;i<N;i++){u.push(rng());
+    const a=rng()||1e-9,b=rng();z1.push(Math.sqrt(-2*Math.log(a))*Math.cos(2*Math.PI*b));
+    const c=rng()||1e-9,d=rng();z2.push(Math.sqrt(-2*Math.log(c))*Math.sin(2*Math.PI*d));}
+  return{u,z1,z2}}
+function buildSample(base,c){const g=c*SD_EX/SD_AGE,sdE=SD_EX*Math.sqrt(1-c*c);
+  const age=[],ex=[],bp=[];
+  for(let i=0;i<N;i++){const a=25+50*base.u[i];
+    let e=6.5+g*(a-50)+sdE*base.z1[i];e=Math.max(0.3,Math.min(14,e));
+    age.push(a);ex.push(e);bp.push(B0+B1*e+B2*a+SD_EPS*base.z2[i]);}
+  return{age,ex,bp}}
+const mean=v=>v.reduce((s,x)=>s+x,0)/v.length;
+function normCdf(x){const t=1/(1+0.2316419*Math.abs(x));
+  const d=0.3989423*Math.exp(-x*x/2);
+  let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return x>0?1-p:p}
+const pTwo=t=>2*(1-normCdf(Math.abs(t)));
+const fmtP=p=>p<0.001?'<0.001':p.toFixed(3);
+const f2=x=>(x>=0?'':'\u2212')+Math.abs(x).toFixed(2);
+const f3=x=>(x>=0?'':'\u2212')+Math.abs(x).toFixed(3);
+
+function ols1(x,y){const n=x.length,mx=mean(x),my=mean(y);let sxx=0,sxy=0;
+  for(let i=0;i<n;i++){sxx+=(x[i]-mx)**2;sxy+=(x[i]-mx)*(y[i]-my)}
+  const b1=sxy/sxx,b0=my-b1*mx;let rss=0;
+  for(let i=0;i<n;i++){const r=y[i]-b0-b1*x[i];rss+=r*r}
+  const s2=rss/(n-2),se1=Math.sqrt(s2/sxx),se0=Math.sqrt(s2*(1/n+mx*mx/sxx));
+  return{b0,b1,se0,se1,t0:b0/se0,t1:b1/se1}}
+function inv3(m){const det=m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])
+  -m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])+m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+  return[[(m[1][1]*m[2][2]-m[1][2]*m[2][1])/det,(m[0][2]*m[2][1]-m[0][1]*m[2][2])/det,(m[0][1]*m[1][2]-m[0][2]*m[1][1])/det],
+    [(m[1][2]*m[2][0]-m[1][0]*m[2][2])/det,(m[0][0]*m[2][2]-m[0][2]*m[2][0])/det,(m[0][2]*m[1][0]-m[0][0]*m[1][2])/det],
+    [(m[1][0]*m[2][1]-m[1][1]*m[2][0])/det,(m[0][1]*m[2][0]-m[0][0]*m[2][1])/det,(m[0][0]*m[1][1]-m[0][1]*m[1][0])/det]]}
+function ols2(x1,x2,y){const n=x1.length;
+  const S=[[n,0,0],[0,0,0],[0,0,0]],b=[0,0,0];
+  for(let i=0;i<n;i++){S[0][1]+=x1[i];S[0][2]+=x2[i];S[1][1]+=x1[i]*x1[i];
+    S[1][2]+=x1[i]*x2[i];S[2][2]+=x2[i]*x2[i];
+    b[0]+=y[i];b[1]+=x1[i]*y[i];b[2]+=x2[i]*y[i]}
+  S[1][0]=S[0][1];S[2][0]=S[0][2];S[2][1]=S[1][2];
+  const inv=inv3(S);
+  const beta=[0,1,2].map(r=>inv[r][0]*b[0]+inv[r][1]*b[1]+inv[r][2]*b[2]);
+  let rss=0;for(let i=0;i<n;i++){const r=y[i]-beta[0]-beta[1]*x1[i]-beta[2]*x2[i];rss+=r*r}
+  const s2=rss/(n-3);
+  const se=[0,1,2].map(k=>Math.sqrt(s2*inv[k][k]));
+  return{b0:beta[0],b1:beta[1],b2:beta[2],se0:se[0],se1:se[1],se2:se[2],
+    t1:beta[1]/se[1],t2:beta[2]/se[2]}}
+function corrOf(x,y){const mx=mean(x),my=mean(y);let sxy=0,sxx=0,syy=0;
+  for(let i=0;i<x.length;i++){sxy+=(x[i]-mx)*(y[i]-my);sxx+=(x[i]-mx)**2;syy+=(y[i]-my)**2}
+  return sxy/Math.sqrt(sxx*syy)}
+
+/* ============ the default sample + fits ============ */
+const base0=makeBase(mulberry32(SEED));
+const D=buildSample(base0,C_DEFAULT);
+const FIT1=ols1(D.ex,D.bp);
+const FIT2=ols2(D.ex,D.age,D.bp);
+const exMin=Math.min(...D.ex), exMax=Math.max(...D.ex);
+const lineX=[exMin-0.3,exMax+0.3];
+
+/* ============ shared layout helpers ============ */
+function baseLayout(extra){return Object.assign({
+  font:FONT, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+  margin:{l:58,r:14,t:36,b:48}, showlegend:false,
+  xaxis:{gridcolor:COL.grid,zeroline:false,title:{text:'exercise (hours / week)',standoff:8}},
+  yaxis:{gridcolor:COL.grid,zeroline:false,title:{text:'systolic BP (mmHg)',standoff:6}}
+},extra||{})}
+const lineTrace=(fit,color,width,dash)=>({x:lineX,
+  y:lineX.map(x=>fit.b0+fit.b1*x),mode:'lines',
+  line:{color,width:width||3,dash:dash||'solid'},hoverinfo:'skip'});
+
+/* ============ progress rail ============ */
+function railDone(k){document.getElementById('rail'+k).classList.remove('live');
+  document.getElementById('rail'+k).classList.add('done');
+  if(k<6)document.getElementById('rail'+(k+1)).classList.add('live')}
+function unlock(act){
+  const body=document.getElementById('body'+act), note=document.getElementById('lock'+act);
+  if(!body||!body.classList.contains('locked-body'))return;
+  body.classList.remove('locked-body'); note.style.display='none';
+  railDone(act-1);
+}
+
+/* ============ STEP 1 ============ */
+const PRED_FB={
+  neg:'That is the standard physiological story \u2014 aerobic exercise lowers resting systolic BP. Write it down: you expect <b>\u03b2\u2081 &lt; 0</b>. Now look at the data this economist collected:',
+  zero:'A cautious prior \u2014 but the clinical literature is fairly one-sided here: exercise lowers resting BP, so most analysts would write down <b>\u03b2\u2081 &lt; 0</b>. Keep your hedge in mind, and now look at the data:',
+  pos:'An unusual prior \u2014 physiologically, exercise lowers resting BP, so the conventional expectation is <b>\u03b2\u2081 &lt; 0</b>. Hold on to your contrarian guess though, and look at the data:'};
+
+document.getElementById('predictRow').addEventListener('click',ev=>{
+  const btn=ev.target.closest('button.choice'); if(!btn||btn.disabled)return;
+  document.querySelectorAll('#predictRow .choice').forEach(b=>{b.disabled=true;
+    if(b===btn)b.classList.add('picked')});
+  const fb=document.getElementById('fb1');
+  fb.innerHTML=PRED_FB[btn.dataset.pred]; fb.classList.add('show');
+  const blk=document.getElementById('scatterBlock');
+  blk.classList.remove('hide'); blk.classList.add('reveal');
+  Plotly.newPlot('chart1',[{x:D.ex,y:D.bp,mode:'markers',
+    marker:{color:'#46536B',size:6,opacity:0.55},
+    hovertemplate:'%{x:.1f} h/wk \u00b7 %{y:.0f} mmHg<extra></extra>'}],
+    baseLayout({title:{text:'300 adults \u00b7 raw data \u2014 the cloud tilts upward',
+      font:{family:"'IBM Plex Mono', monospace",size:13},x:0}}),PCONF);
+});
+
+document.getElementById('fitBtn').addEventListener('click',()=>{
+  document.getElementById('fitBtn').disabled=true;
+  Plotly.addTraces('chart1',[lineTrace(FIT1,COL.naive,3.5)]);
+  Plotly.relayout('chart1',{'title.text':'OLS fit \u2014 the simple regression',
+    annotations:[{x:exMax-1,y:FIT1.b0+FIT1.b1*(exMax-1),ax:-10,ay:-44,
+      text:'<b>b\u2081 = '+f2(FIT1.b1)+'</b> mmHg per hour',
+      font:{color:COL.naive,size:14},arrowcolor:COL.naive}]});
+  const lo=FIT1.b1-1.96*FIT1.se1, hi=FIT1.b1+1.96*FIT1.se1;
+  document.getElementById('out1body').innerHTML=
+    '<tr class="hi"><td>exercise</td><td class="num-rose">'+f3(FIT1.b1)+'</td><td>'+FIT1.se1.toFixed(3)+
+    '</td><td>'+FIT1.t1.toFixed(2)+'</td><td>'+fmtP(pTwo(FIT1.t1))+'</td><td>['+f2(lo)+', '+f2(hi)+']</td></tr>'+
+    '<tr><td>constant</td><td>'+f3(FIT1.b0)+'</td><td>'+FIT1.se0.toFixed(3)+
+    '</td><td>'+FIT1.t0.toFixed(2)+'</td><td>'+fmtP(pTwo(FIT1.t0))+'</td><td></td></tr>';
+  document.getElementById('fbFit').innerHTML=
+    '<b>b\u2081 = '+f2(FIT1.b1)+', t = '+FIT1.t1.toFixed(1)+'.</b> Taken at face value, each weekly hour of '+
+    'exercise comes with '+FIT1.b1.toFixed(1)+' mmHg <i>higher</i> blood pressure \u2014 strongly \u201csignificant,\u201d '+
+    'and the opposite of your expectation. Before blaming the expectation, interrogate the model: '+
+    'what did BP = \u03b2\u2080 + \u03b2\u2081\u00b7exercise + u sweep into u?';
+  const o=document.getElementById('out1'); o.classList.remove('hide'); o.classList.add('reveal');
+  unlock(2);
+});
+
+/* ============ STEP 2 ============ */
+const EPS_FB={
+  age:{cls:'teal',txt:'<b>Exactly.</b> Age sits in u and is correlated with exercise, so <span class="serif"><i>E</i>[u | exercise] \u2260 0</span> \u2014 exogeneity fails and b\u2081 is biased. The fitted line is partly measuring exercise and partly proxying for age. Genetics and measurement error also live in u, but as long as they are unrelated to exercise they only add noise, not bias. Next: draw the problem.'},
+  gen:{cls:'rose',txt:'Genetics certainly belongs to u \u2014 but if it is <i>uncorrelated</i> with exercise it does no damage: <span class="serif"><i>E</i>[u | exercise]</span> can still be zero. Omitted \u2260 problematic. Look for the omitted factor that <i>moves with</i> the regressor.'},
+  meas:{cls:'rose',txt:'Classical measurement error in the <i>dependent</i> variable just lands in u and inflates standard errors \u2014 no bias, because it is unrelated to exercise. (Error in the <i>regressor</i> would be another story.) Which omitted factor is correlated with exercise itself?'}};
+
+document.getElementById('epsRow').addEventListener('click',ev=>{
+  const btn=ev.target.closest('button.choice'); if(!btn)return;
+  const k=btn.dataset.eps, fb=document.getElementById('fb2');
+  fb.className='feedback show '+EPS_FB[k].cls; fb.innerHTML=EPS_FB[k].txt;
+  document.querySelectorAll('#epsRow .choice').forEach(b=>b.classList.toggle('picked',b===btn));
+  if(k==='age'){document.querySelectorAll('#epsRow .choice').forEach(b=>b.disabled=true);
+    btn.classList.add('right'); unlock(3)}
+});
+
+/* ============ STEP 3 · DAG ============ */
+const dagDone={bp:false,ex:false};
+function dagFeedback(){
+  const fb=document.getElementById('fb3');
+  if(dagDone.bp&&dagDone.ex){
+    fb.className='feedback show teal';
+    fb.innerHTML='<b>Both arrows point up \u2014 that is the confounding pattern.</b> Age pushes BP up '+
+      '(+) and, in this sample, pushes exercise up too (+). So high-exercise people are '+
+      'disproportionately <i>older</i>, and the simple regression hands exercise the blame for '+
+      'age\u2019s effect on BP. In this sample, corr(exercise, age) = '+
+      corrOf(D.ex,D.age).toFixed(2)+' \u2014 see for yourself:';
+    const blk=document.getElementById('ageExBlock');
+    if(blk.classList.contains('hide')){
+      blk.classList.remove('hide'); blk.classList.add('reveal');
+      const f=ols1(D.age,D.ex);const ax=[25,75];
+      Plotly.newPlot('chartAgeEx',[
+        {x:D.age,y:D.ex,mode:'markers',marker:{color:D.age,colorscale:AGE_SCALE,size:5,opacity:0.6},
+          hovertemplate:'age %{x:.0f} \u00b7 %{y:.1f} h/wk<extra></extra>'},
+        {x:ax,y:ax.map(a=>f.b0+f.b1*a),mode:'lines',line:{color:COL.ink,width:2.5},hoverinfo:'skip'}],
+        baseLayout({margin:{l:52,r:14,t:34,b:46},
+          xaxis:{gridcolor:COL.grid,zeroline:false,title:{text:'age (years)',standoff:8}},
+          yaxis:{gridcolor:COL.grid,zeroline:false,title:{text:'exercise (h/wk)',standoff:6}},
+          title:{text:'the regressor and the lurker move together',x:0,
+            font:{family:"'IBM Plex Mono', monospace",size:13}}}),PCONF);
+    }
+    unlock(4);
+  }
+}
+document.querySelectorAll('#act3 .qrow .choice').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const q=btn.dataset.q, a=btn.dataset.a, fb=document.getElementById('fb3');
+    const row=btn.closest('.qrow');
+    if(a==='up'){
+      dagDone[q]=true;
+      row.querySelectorAll('.choice').forEach(b=>{b.disabled=true;b.classList.toggle('right',b===btn)});
+      row.querySelector('.mark').classList.add('show');
+      document.getElementById(q==='bp'?'signAgeBp':'signAgeEx').classList.add('show');
+      document.getElementById(q==='bp'?'edgeAgeBp':'edgeAgeEx').classList.add('lit');
+      dagFeedback();
+      if(!(dagDone.bp&&dagDone.ex)){fb.className='feedback show teal';
+        fb.innerHTML='Right \u2014 one arrow labeled. Now the other.'}
+    }else{
+      fb.className='feedback show rose';
+      fb.innerHTML=q==='bp'
+        ?'Arterial stiffening with age pushes systolic BP <i>up</i> \u2014 one of the most robust facts in cardiology. Try again.'
+        :'A perfectly reasonable guess for the real world \u2014 in many datasets exercise <i>falls</i> with age. But whether it rises or falls is an <b>empirical</b> question about <i>this</i> sample, and here the older adults (think: retirees with time, doctor\u2019s orders) exercise more. Pick again.';
+    }
+  });
+});
+
+/* ============ STEP 4 · comparison ============ */
+const CMP_FB={
+  same:{cls:'teal',txt:'<b>Yes \u2014 hold age fixed, vary exercise.</b> Two 45-year-olds who differ only in exercise: any systematic BP gap between them is attributable to exercise, not to age. This is what \u201ccontrolling for age\u201d <i>means</i>. The other two comparisons change age along the way and smuggle its effect into the answer.'},
+  both:{cls:'rose',txt:'This comparison moves <i>two</i> dials at once \u2014 the 60-year-old differs in age <b>and</b> exercise, so any BP gap is an unattributable blend of both arrows. (Uncomfortably, this is roughly the comparison the Step-1 regression is making.) Find the pair where only exercise differs.'},
+  age:{cls:'rose',txt:'Close \u2014 you held something fixed! But you held <i>exercise</i> fixed and varied <i>age</i>: this pair identifies the effect of age on BP (\u03b2\u2082), not the effect of exercise (\u03b2\u2081). Flip it: hold age fixed, vary exercise.'}};
+
+document.getElementById('cmpRow').addEventListener('click',ev=>{
+  const btn=ev.target.closest('button.choice'); if(!btn)return;
+  const k=btn.dataset.cmp, fb=document.getElementById('fb4');
+  fb.className='feedback show '+CMP_FB[k].cls; fb.innerHTML=CMP_FB[k].txt;
+  document.querySelectorAll('#cmpRow .choice').forEach(b=>b.classList.toggle('picked',b===btn));
+  if(k==='same'){
+    document.querySelectorAll('#cmpRow .choice').forEach(b=>b.disabled=true);
+    btn.classList.add('right');
+    const blk=document.getElementById('bandsBlock');
+    blk.classList.remove('hide'); blk.classList.add('reveal');
+    drawBands('chartBands');
+    unlock(5);
+  }
+});
+
+function drawBands(div){
+  const bands=[{lo:25,hi:41.7,lab:'age 25\u201341'},{lo:41.7,hi:58.3,lab:'age 42\u201358'},{lo:58.3,hi:75.01,lab:'age 59\u201375'}];
+  const traces=[];
+  bands.forEach((b,k)=>{
+    const ix=[];for(let i=0;i<N;i++)if(D.age[i]>=b.lo&&D.age[i]<b.hi)ix.push(i);
+    const x=ix.map(i=>D.ex[i]),y=ix.map(i=>D.bp[i]);
+    traces.push({x,y,mode:'markers',name:b.lab,showlegend:true,
+      marker:{color:COL.ages[k],size:6,opacity:0.7},
+      hovertemplate:b.lab+' \u00b7 %{x:.1f} h/wk \u00b7 %{y:.0f} mmHg<extra></extra>'});
+    const f=ols1(x,y),x0=Math.min(...x),x1=Math.max(...x);
+    traces.push({x:[x0,x1],y:[f.b0+f.b1*x0,f.b0+f.b1*x1],mode:'lines',showlegend:false,
+      line:{color:COL.ages[k],width:3.5},hoverinfo:'skip'});
+  });
+  traces.push(Object.assign(lineTrace(FIT1,COL.naive,3,'dash'),{name:'pooled (simple) fit',showlegend:true}));
+  Plotly.newPlot(div,traces,baseLayout({showlegend:true,
+    legend:{orientation:'h',y:1.12,font:{size:12}},
+    title:{text:'same data, sliced by age band',x:0,
+      font:{family:"'IBM Plex Mono', monospace",size:13}}}),PCONF);
+}
+
+/* ============ STEP 5 · multiple regression ============ */
+let view3d=true, multiRun=false;
+document.getElementById('runMulti').addEventListener('click',()=>{
+  if(multiRun)return; multiRun=true;
+  document.getElementById('runMulti').disabled=true;
+  const cell=(v,se,cls)=>'<span class="'+(cls||'')+'">'+f3(v)+'</span><br><span style="color:'+COL.muted+'">('+se.toFixed(3)+')</span>';
+  document.getElementById('cmpBody').innerHTML=
+    '<tr><td>exercise</td>'+
+    '<td>'+cell(FIT1.b1,FIT1.se1,'num-rose')+' <span class="pill rose">p '+fmtP(pTwo(FIT1.t1))+'</span></td>'+
+    '<td>'+cell(FIT2.b1,FIT2.se1,'num-teal')+' <span class="pill teal">p '+fmtP(pTwo(FIT2.t1))+'</span></td>'+
+    '<td class="num-teal">\u03b2\u2081 = \u22121.0</td></tr>'+
+    '<tr><td>age</td><td style="color:'+COL.muted+'">\u2014</td>'+
+    '<td>'+cell(FIT2.b2,FIT2.se2)+'</td><td>\u03b2\u2082 = 0.9</td></tr>'+
+    '<tr><td>constant</td><td>'+cell(FIT1.b0,FIT1.se0)+'</td>'+
+    '<td>'+cell(FIT2.b0,FIT2.se0)+'</td><td>\u03b2\u2080 = 88</td></tr>';
+  document.getElementById('fbFlip').innerHTML=
+    '<b>The coefficient flipped: '+f2(FIT1.b1)+' \u2192 '+f2(FIT2.b1)+'.</b> Same 300 people, same outcome \u2014 '+
+    'the only change is that age moved out of u and into the model. Holding age fixed, an extra weekly hour '+
+    'of exercise is associated with about '+Math.abs(FIT2.b1).toFixed(1)+' mmHg <i>lower</i> BP, and the truth '+
+    'is \u22121.0: the estimate now lands where it should, off only by sampling noise. \u03b2\u0302\u2082 = '+
+    f2(FIT2.b2)+' similarly recovers the true 0.9.';
+  const o=document.getElementById('multiOut');
+  o.classList.remove('hide'); o.classList.add('reveal');
+  document.getElementById('titleFlip').classList.add('flipped');
+  draw3D(); buildCorrTable(); unlock(6);
+});
+
+document.getElementById('tg3d').addEventListener('click',()=>{if(!view3d){view3d=true;swapToggle();draw3D()}});
+document.getElementById('tgFacet').addEventListener('click',()=>{if(view3d){view3d=false;swapToggle();
+  document.getElementById('facetNote').textContent=
+    'The 2-D shadow of the plane: within each age band the fitted relationship slopes down.';
+  drawBands('chart2')}});
+function swapToggle(){document.getElementById('tg3d').classList.toggle('on',view3d);
+  document.getElementById('tgFacet').classList.toggle('on',!view3d)}
+
+function draw3D(){
+  document.getElementById('facetNote').textContent=
+    'Drag to rotate. The tilt of the plane along the exercise axis is \u03b2\u0302\u2081 = '+f2(FIT2.b1)+
+    ' \u2014 rotate until age points away from you and the downward slope appears.';
+  const pts={type:'scatter3d',mode:'markers',x:D.ex,y:D.age,z:D.bp,
+    marker:{size:3,color:D.age,colorscale:AGE_SCALE,opacity:0.75},
+    hovertemplate:'%{x:.1f} h/wk \u00b7 age %{y:.0f} \u00b7 %{z:.0f} mmHg<extra></extra>'};
+  const gx=[],gy=[];const ageMin=25,ageMax=75;
+  for(let i=0;i<=10;i++){gx.push(exMin+(exMax-exMin)*i/10);gy.push(ageMin+(ageMax-ageMin)*i/10)}
+  const gz=gy.map(a=>gx.map(x=>FIT2.b0+FIT2.b1*x+FIT2.b2*a));
+  const plane={type:'surface',x:gx,y:gy,z:gz,opacity:0.45,showscale:false,
+    colorscale:[[0,'#0B7A78'],[1,'#0B7A78']],hoverinfo:'skip'};
+  Plotly.newPlot('chart2',[pts,plane],{
+    font:FONT,paper_bgcolor:'rgba(0,0,0,0)',margin:{l:0,r:0,t:10,b:0},showlegend:false,
+    scene:{xaxis:{title:'exercise (h/wk)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
+      yaxis:{title:'age (years)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
+      zaxis:{title:'BP (mmHg)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
+      camera:{eye:{x:1.7,y:-1.7,z:0.5}},aspectmode:'cube'}},PCONF);
+}
+
+/* ============ STEP 6 · correlation table + question ============ */
+function buildCorrTable(){
+  const cs=[0,0.15,0.30,0.50,0.75,0.90];
+  let html='';
+  cs.forEach(c=>{
+    const s=buildSample(base0,c);
+    const f=ols1(s.ex,s.bp);
+    const err=f.b1-B1;
+    const verdict=Math.abs(err)<0.5?'<span class="pill teal">\u2248 fine</span>':
+      (f.b1<0?'<span class="pill" style="background:#B98A2E;color:#fff">attenuated</span>':
+        '<span class="pill rose">sign flipped</span>');
+    const isHome=Math.abs(c-C_DEFAULT)<1e-9;
+    html+='<tr'+(isHome?' class="hi"':'')+'><td>'+c.toFixed(2)+(isHome?' \u00a0<span style="color:'+COL.muted+'">\u2190 the world above</span>':'')+
+      '</td><td class="'+(f.b1<0?'num-teal':'num-rose')+'">'+f3(f.b1)+'</td><td>'+f2(err)+'</td><td>'+verdict+'</td></tr>';
+  });
+  document.getElementById('corrBody').innerHTML=html;
+}
+const BIAS_FB={
+  up:{cls:'teal',txt:'<b>Grows \u2014 and now you know why.</b> The omitted-variable-bias formula says the simple regression\u2019s slope equals \u03b2\u0302\u2081 + \u03b2\u0302\u2082\u00b7\u03b4\u0302: the controlled estimate plus a bias term, where \u03b4\u0302 is the slope of age on exercise. Stronger corr(exercise, age) \u21d2 bigger \u03b4\u0302 \u21d2 bigger bias term, with \u03b2\u0302\u2082 \u2248 0.9 as the multiplier. Read the table bottom-up: at corr = 0 the \u201cwrong\u201d model is nearly right (\u03b4\u0302 \u2248 0, omitting age is harmless); by 0.30 the sign has already flipped; at 0.90 the estimate is five units off. The danger of omitting a variable is not that it exists \u2014 it is how tightly it tracks the regressor you kept.'},
+  down:{cls:'rose',txt:'Look down the error column again \u2014 +0.36, +1.2, +2.0, +3.0, +4.2, +5.0. The estimate drifts <i>further</i> from \u22121.0 as the correlation tightens.'},
+  same:{cls:'rose',txt:'The error column says otherwise: it climbs steadily from +0.36 at corr = 0 to about +5 at corr = 0.90. The correlation is doing the damage \u2014 trace the column once more.'}};
+document.getElementById('biasRow').addEventListener('click',ev=>{
+  const btn=ev.target.closest('button.choice'); if(!btn)return;
+  const k=btn.dataset.bias, fb=document.getElementById('fb6');
+  fb.className='feedback show '+BIAS_FB[k].cls; fb.innerHTML=BIAS_FB[k].txt;
+  document.querySelectorAll('#biasRow .choice').forEach(b=>b.classList.toggle('picked',b===btn));
+  if(k==='up'){document.querySelectorAll('#biasRow .choice').forEach(b=>b.disabled=true);
+    btn.classList.add('right'); railDone(6)}
+});
+</script>
+</body>
+</html>
