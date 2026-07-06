@@ -10,7 +10,9 @@ These interactive simulations help you understand key econometric concepts throu
 ---
 
 ### 1. 🩺 [The Confounded Coefficient: Multiple Linear Regression Game](https://jihye-heo.github.io/econ-teaching-games/confounded-coefficient.html)
-Discover why we need multiple regression by investigating a medical mystery: the data says exercise *raises* blood pressure! Work through the puzzle step by step and learn how:
+Discover why we need multiple regression by investigating a medical mystery: the data says exercise *raises* blood pressure!
+<!--
+Work through the puzzle step by step and learn how:
 - A simple regression of BP on exercise can deliver a confidently wrong answer
 - The error term *u* absorbs omitted factors — and only correlated omissions cause bias
 - A confounder (age) pointing at both the regressor and the outcome distorts the slope
@@ -25,6 +27,12 @@ Discover why we need multiple regression by investigating a medical mystery: the
 - **Truth revealed:** Compare your estimates to the true coefficients of the simulated world
 
 **How to use:** Work through the six steps in order — each unlocks the next. Answer the multiple-choice checkpoints to progress. Works on laptop or phone.
+-->
+
+
+### 2. 📈 [Unbiasedness vs. Consistency](https://jihye-heo.github.io/econ-teaching-games/unbiasedness-consistency-econometrics.html)
+
+Understand the difference between **unbiasedness** and **consistency** by exploring how an estimator behaves across repeated samples and as the sample size grows.
 
 ---
 
