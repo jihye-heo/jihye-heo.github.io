@@ -32,7 +32,7 @@ Work through the puzzle step by step and learn how:
 
 ### 2. 📈 [Unbiasedness vs. Consistency](https://jihye-heo.github.io/econ-teaching-games/unbiasedness-consistency-econometrics.html)
 
-Understand the difference between **unbiasedness** and **consistency** by exploring how an estimator behaves across repeated samples and as the sample size grows.
+Is an estimator *right on average*, or does it *get closer to the truth with more data*? Explore the difference between **unbiasedness** and **consistency** through interactive simulations.
 
 ---
 
